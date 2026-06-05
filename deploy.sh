@@ -3,6 +3,7 @@
 # ================================================
 # deploy.sh - Laravel + MySQL di EC2 (Tanpa RDS)
 # Primary: N. Virginia | Secondary: Oregon
+# Ubuntu 26.04 + PHP 8.5
 # ================================================
 
 set -e
@@ -10,47 +11,45 @@ set -e
 echo "===== MULAI DEPLOYMENT LARAVEL ====="
 
 # 1. Update sistem
-echo "[1/9] Update sistem..."
+echo "[1/8] Update sistem..."
 sudo apt update && sudo apt upgrade -y
 
-# 2. Install PHP 8.2
-echo "[2/9] Install PHP 8.2..."
-sudo apt install -y software-properties-common
-sudo add-apt-repository ppa:ondrej/php -y
-sudo apt update
-sudo apt install -y php8.2 php8.2-cli php8.2-fpm \
-    php8.2-mysql php8.2-xml php8.2-curl \
-    php8.2-mbstring php8.2-zip unzip
+# 2. Install PHP 8.5
+echo "[2/8] Install PHP 8.5..."
+sudo apt install -y php8.5 php8.5-cli php8.5-fpm \
+    php8.5-mysql php8.5-xml php8.5-curl \
+    php8.5-mbstring php8.5-zip unzip
 
 # 3. Install Nginx
-echo "[3/9] Install Nginx..."
+echo "[3/8] Install Nginx..."
 sudo apt install -y nginx
 sudo systemctl enable nginx
+sudo systemctl start nginx
 
 # 4. Install MySQL
-echo "[4/9] Install MySQL..."
+echo "[4/8] Install MySQL..."
 sudo apt install -y mysql-server
 sudo systemctl enable mysql
 sudo systemctl start mysql
 
 # 5. Install Composer
-echo "[5/9] Install Composer..."
+echo "[5/8] Install Composer..."
 curl -sS https://getcomposer.org/installer | php
 sudo mv composer.phar /usr/local/bin/composer
 
 # 6. Install Git & clone repo
-echo "[6/9] Clone repository..."
+echo "[6/8] Clone repository..."
 sudo apt install -y git
 cd /var/www
 sudo git clone https://github.com/imampratama512/tugasakhir.git laravel-app
 cd laravel-app
 
 # 7. Install dependencies Laravel
-echo "[7/9] Install dependencies..."
+echo "[7/8] Install dependencies..."
 composer install --optimize-autoloader --no-dev
 
 # 8. Setup environment
-echo "[8/9] Setup environment..."
+echo "[8/8] Setup environment..."
 cp .env.example .env
 echo ""
 echo ">>> Silakan isi file .env sekarang"
@@ -66,8 +65,7 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# 9. Setup permission & Nginx
-echo "[9/9] Setup Nginx & permission..."
+# Setup permission & Nginx
 sudo chown -R www-data:www-data /var/www/laravel-app
 sudo chmod -R 775 /var/www/laravel-app/storage
 sudo chmod -R 775 /var/www/laravel-app/bootstrap/cache
@@ -77,7 +75,7 @@ sudo ln -sf /etc/nginx/sites-available/laravel /etc/nginx/sites-enabled/
 sudo rm -f /etc/nginx/sites-enabled/default
 sudo nginx -t
 sudo systemctl restart nginx
-sudo systemctl restart php8.2-fpm
+sudo systemctl restart php8.5-fpm
 
 echo ""
 echo "===== DEPLOYMENT SELESAI ====="
