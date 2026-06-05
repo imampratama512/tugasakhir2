@@ -1,0 +1,42 @@
+name: Deploy to AWS EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy Application
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Masuk ke direktori project di server
+            cd /var/www/tugasakhir
+            
+            # Tarik kode terbaru
+            git pull origin main
+            
+            # Rebuild image dan up container (detach)
+            docker-compose build --no-cache
+            docker-compose up -d
+            
+            # Jalankan migrasi database di dalam container (akan lari ke RDS)
+            docker-compose exec -T app php artisan migrate --force
+            
+            # Optimasi aplikasi
+            docker-compose exec -T app php artisan optimize:clear
+            docker-compose exec -T app php artisan config:cache
+            docker-compose exec -T app php artisan view:cache
+            
+            echo "🚀 Deployment berhasil!"
