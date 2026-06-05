@@ -11,50 +11,57 @@ set -e
 echo "===== MULAI DEPLOYMENT LARAVEL ====="
 
 # 1. Update sistem
-echo "[1/9] Update sistem..."
+echo "[1/10] Update sistem..."
 sudo apt update && sudo apt upgrade -y
 
 # 2. Install PHP 8.5
-echo "[2/9] Install PHP 8.5..."
+echo "[2/10] Install PHP 8.5..."
 sudo apt install -y php8.5 php8.5-cli php8.5-fpm \
     php8.5-mysql php8.5-xml php8.5-curl \
     php8.5-mbstring php8.5-zip unzip
 
 # 3. Install Nginx
-echo "[3/9] Install Nginx..."
+echo "[3/10] Install Nginx..."
 sudo apt install -y nginx
 sudo systemctl enable nginx
 sudo systemctl start nginx
 
 # 4. Install MySQL
-echo "[4/9] Install MySQL..."
+echo "[4/10] Install MySQL..."
 sudo apt install -y mysql-server
 sudo systemctl enable mysql
 sudo systemctl start mysql
 
 # 5. Install Composer
-echo "[5/9] Install Composer..."
+echo "[5/10] Install Composer..."
 curl -sS https://getcomposer.org/installer | php
 sudo mv composer.phar /usr/local/bin/composer
 
-# 6. Install Git & clone repo
-echo "[6/9] Clone repository..."
+# 6. Install Node.js + npm
+echo "[6/10] Install Node.js..."
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# 7. Install Git & clone repo
+echo "[7/10] Clone repository..."
 sudo apt install -y git
 cd /var/www
 sudo git clone https://github.com/imampratama512/tugasakhir.git laravel-app
 
-# Fix ownership agar composer bisa jalan tanpa sudo
+# Fix ownership
 sudo chown -R ubuntu:ubuntu /var/www/laravel-app
 git config --global --add safe.directory /var/www/laravel-app
 
 cd /var/www/laravel-app
 
-# 7. Install dependencies Laravel
-echo "[7/9] Install dependencies..."
+# 8. Install dependencies & build assets
+echo "[8/10] Install dependencies & build assets..."
 composer install --optimize-autoloader --no-dev
+npm install
+npm run build
 
-# 8. Setup database MySQL
-echo "[8/9] Setup database MySQL..."
+# 9. Setup database MySQL
+echo "[9/10] Setup database MySQL..."
 echo ""
 echo ">>> Masukkan nama database (contoh: dbtugasakhir):"
 read DB_NAME
@@ -70,11 +77,11 @@ sudo mysql -e "FLUSH PRIVILEGES;"
 
 echo "Database dan user berhasil dibuat!"
 
-# 9. Setup environment
-echo "[9/9] Setup environment..."
+# 10. Setup environment
+echo "[10/10] Setup environment..."
 cp .env.example .env
 
-# Otomatis isi nilai DB di .env
+# Otomatis isi nilai di .env
 sed -i "s/DB_DATABASE=.*/DB_DATABASE=${DB_NAME}/" .env
 sed -i "s/DB_USERNAME=.*/DB_USERNAME=${DB_USER}/" .env
 sed -i "s/DB_PASSWORD=.*/DB_PASSWORD=${DB_PASS}/" .env
