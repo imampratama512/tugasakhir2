@@ -57,8 +57,6 @@ cd /var/www/laravel-app
 # 8. Install dependencies & build assets
 echo "[8/10] Install dependencies & build assets..."
 composer install --optimize-autoloader --no-dev
-npm install
-npm run build
 
 # 9. Setup database MySQL
 echo "[9/10] Setup database MySQL..."
