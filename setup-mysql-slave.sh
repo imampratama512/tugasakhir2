@@ -1,49 +1,48 @@
 #!/bin/bash
-
-# ================================================
-# setup-mysql-slave.sh - Konfigurasi MySQL Slave
-# Jalankan di EC2 Oregon
-# ================================================
-
 set -e
 
 echo "===== SETUP MYSQL SLAVE (OREGON) ====="
 
-# 1. Buat database
-echo "[1/4] Buat database..."
-sudo mysql -e "CREATE DATABASE IF NOT EXISTS dbtugasakhir;"
-sudo mysql -e "CREATE USER IF NOT EXISTS 'laravel_user'@'localhost' IDENTIFIED BY 'imam1976';"
-sudo mysql -e "GRANT ALL PRIVILEGES ON dbtugasakhir.* TO 'laravel_user'@'localhost';"
+# Isi nilai ini dari output setup-mysql-master.sh
+MASTER_IP="54.159.4.173"
+MASTER_LOG_FILE="mysql-bin.000001"
+MASTER_LOG_POS="158"
+
+echo ">>> Nama database:"; read DB_NAME
+echo ">>> Username Laravel:"; read DB_USER
+echo ">>> Password:"; read -s DB_PASS
+echo ""
+echo ">>> Password replication:"; read -s REPL_PASS
+echo ""
+
+sudo mysql -e "CREATE DATABASE IF NOT EXISTS ${DB_NAME};"
+sudo mysql -e "CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';"
+sudo mysql -e "GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'localhost';"
 sudo mysql -e "FLUSH PRIVILEGES;"
 
-# 2. Konfigurasi MySQL sebagai slave
-echo "[2/4] Konfigurasi MySQL slave..."
 sudo tee /etc/mysql/mysql.conf.d/slave.cnf > /dev/null <<EOF
 [mysqld]
 server-id = 2
 log_bin = /var/log/mysql/mysql-bin.log
-binlog_do_db = dbtugasakhir
+binlog_do_db = ${DB_NAME}
 bind-address = 0.0.0.0
 relay-log = /var/log/mysql/mysql-relay-bin.log
 EOF
 
-# 3. Restart MySQL & mulai replikasi
-echo "[3/4] Start replikasi..."
 sudo systemctl restart mysql
+
+sudo mysql -e "STOP REPLICA;"
+sudo mysql -e "RESET REPLICA ALL;"
 sudo mysql -e "
 CHANGE REPLICATION SOURCE TO
-  SOURCE_HOST='54.159.4.173',
+  SOURCE_HOST='${MASTER_IP}',
   SOURCE_USER='repl_user',
-  SOURCE_PASSWORD='imam1976',
-  SOURCE_LOG_FILE='mysql-bin.000001',
-  SOURCE_LOG_POS=158;
+  SOURCE_PASSWORD='${REPL_PASS}',
+  SOURCE_LOG_FILE='${MASTER_LOG_FILE}',
+  SOURCE_LOG_POS=${MASTER_LOG_POS};
 "
 sudo mysql -e "START REPLICA;"
 
-# 4. Cek status replikasi
-echo "[4/4] Cek status replikasi..."
-sudo mysql -e "SHOW REPLICA STATUS\G" | grep -E "Replica_IO_Running|Replica_SQL_Running|Seconds_Behind_Source"
-
 echo ""
 echo "===== SLAVE SIAP ====="
-echo "Pastikan Replica_IO_Running: Yes dan Replica_SQL_Running: Yes"
+sudo mysql -e "SHOW REPLICA STATUS\G" | grep -E "Replica_IO_Running|Replica_SQL_Running|Seconds_Behind_Source"
