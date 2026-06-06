@@ -1,5 +1,9 @@
 #!/bin/bash
+
+# ================================================
+# promote-slave.sh - Promote MySQL Slave ke Master
 # Jalankan di EC2 Oregon saat Virginia mati
+# ================================================
 
 echo "===== PROMOTE SLAVE → MASTER ====="
 
@@ -13,5 +17,6 @@ php artisan config:cache
 sudo systemctl restart php8.5-fpm
 sudo systemctl restart nginx
 
+echo ""
 echo "===== OREGON SEKARANG JADI MASTER ====="
 echo "Website: http://$(curl -s ifconfig.me)"

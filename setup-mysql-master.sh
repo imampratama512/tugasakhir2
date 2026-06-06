@@ -1,5 +1,12 @@
 #!/bin/bash
+
+# ================================================
+# setup-mysql-master.sh - Konfigurasi MySQL Master
+# Jalankan di EC2 N. Virginia
+# ================================================
+
 set -e
+
 echo "===== SETUP MYSQL MASTER (N. VIRGINIA) ====="
 
 echo ">>> Nama database:"; read DB_NAME
@@ -13,6 +20,7 @@ sudo mysql -e "CREATE DATABASE IF NOT EXISTS ${DB_NAME};"
 sudo mysql -e "CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';"
 sudo mysql -e "GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'localhost';"
 sudo mysql -e "CREATE USER IF NOT EXISTS 'repl_user'@'%' IDENTIFIED BY '${REPL_PASS}';"
+sudo mysql -e "ALTER USER 'repl_user'@'%' IDENTIFIED WITH mysql_native_password BY '${REPL_PASS}';"
 sudo mysql -e "GRANT REPLICATION SLAVE ON *.* TO 'repl_user'@'%';"
 sudo mysql -e "FLUSH PRIVILEGES;"
 
