@@ -31,7 +31,7 @@ EOF
 echo "[3/4] Start replikasi..."
 sudo systemctl restart mysql
 sudo mysql -e "
-CHANGE REPLICATION SOURCE T
+CHANGE REPLICATION SOURCE TO
   SOURCE_HOST='54.159.4.173',
   SOURCE_USER='repl_user',
   SOURCE_PASSWORD='imam1976',
