@@ -37,11 +37,11 @@ echo "[3/4] Start replikasi..."
 sudo systemctl restart mysql
 sudo mysql -e "
 CHANGE MASTER TO
-  MASTER_HOST='${MASTER_IP}',
+  MASTER_HOST='54.159.4.173',
   MASTER_USER='repl_user',
   MASTER_PASSWORD='imam1976',
-  MASTER_LOG_FILE='${MASTER_LOG_FILE}',
-  MASTER_LOG_POS=${MASTER_LOG_POS};
+  MASTER_LOG_FILE='mysql-bin.000001',
+  MASTER_LOG_POS=158;
 START SLAVE;
 "
 
