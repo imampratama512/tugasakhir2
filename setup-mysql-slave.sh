@@ -5,7 +5,7 @@ echo "===== SETUP MYSQL SLAVE (OREGON) ====="
 
 # Isi nilai ini dari output setup-mysql-master.sh
 MASTER_IP="54.159.4.173"
-MASTER_LOG_FILE="mysql-bin.000001"
+MASTER_LOG_FILE="mysql-bin.000003"
 MASTER_LOG_POS="158"
 
 echo ">>> Nama database:"; read DB_NAME
