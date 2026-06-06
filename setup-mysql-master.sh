@@ -20,7 +20,6 @@ sudo mysql -e "CREATE DATABASE IF NOT EXISTS ${DB_NAME};"
 sudo mysql -e "CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';"
 sudo mysql -e "GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'localhost';"
 sudo mysql -e "CREATE USER IF NOT EXISTS 'repl_user'@'%' IDENTIFIED BY '${REPL_PASS}';"
-sudo mysql -e "ALTER USER 'repl_user'@'%' IDENTIFIED WITH mysql_native_password BY '${REPL_PASS}';"
 sudo mysql -e "GRANT REPLICATION SLAVE ON *.* TO 'repl_user'@'%';"
 sudo mysql -e "FLUSH PRIVILEGES;"
 
