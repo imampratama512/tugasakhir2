@@ -23,7 +23,7 @@ sudo mv composer.phar /usr/local/bin/composer
 # 5. Install Git & clone repo
 sudo apt install -y git
 cd /var/www
-sudo git clone https://github.com/imampratama512/tugasakhir2.git laravel-app
+sudo git clone https://github.com/imampratama512/tugasakhir.git laravel-app
 sudo chown -R ubuntu:ubuntu /var/www/laravel-app
 git config --global --add safe.directory /var/www/laravel-app
 cd /var/www/laravel-app
