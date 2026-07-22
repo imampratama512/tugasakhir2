@@ -1,46 +1,74 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-echo "===== MULAI UPDATE APLIKASI LARAVEL ====="
+echo "=========================================="
+echo "      UPDATE APLIKASI LARAVEL"
+echo "=========================================="
 
 APP_DIR="/var/www/laravel-app"
+
 cd "$APP_DIR"
 
-# Izinkan git di folder ini (user ubuntu & root)
+# Tambahkan safe directory untuk Git
 git config --global --add safe.directory "$APP_DIR" 2>/dev/null || true
-sudo git config --global --add safe.directory "$APP_DIR" 2>/dev/null || true
+sudo git config --system --add safe.directory "$APP_DIR" 2>/dev/null || true
 
-# 1. Ambil kode terbaru — sementara ubah owner ke ubuntu agar git pull tidak error
-sudo chown -R ubuntu:ubuntu "$APP_DIR"
+echo ""
+echo ">>> Mengambil source terbaru..."
 git pull origin main
 
-# 2. Update dependencies PHP (jangan jalankan sebagai root)
-composer install --optimize-autoloader --no-dev
+echo ""
+echo ">>> Install dependency Composer..."
+composer install \
+    --no-dev \
+    --optimize-autoloader \
+    --no-interaction
 
-# 3. Jalankan migration baru (jika ada)
-echo ">>> Jalankan migration baru? (y/n)"
-read RUN_MIGRATE
-if [ "$RUN_MIGRATE" = "y" ]; then
-  php artisan migrate --force
+echo ""
+read -p ">>> Jalankan migration? (y/n): " RUN_MIGRATE
+
+if [[ "$RUN_MIGRATE" =~ ^[Yy]$ ]]; then
+    echo ">>> Menjalankan migration..."
+    php artisan migrate --force
 fi
 
-# 4. Bersihkan cache lama dulu, lalu buat ulang
+echo ""
+echo ">>> Mengatur permission..."
+
+sudo chown -R www-data:www-data "$APP_DIR/storage"
+sudo chown -R www-data:www-data "$APP_DIR/bootstrap/cache"
+
+sudo chmod -R 775 "$APP_DIR/storage"
+sudo chmod -R 775 "$APP_DIR/bootstrap/cache"
+
+echo ""
+echo ">>> Membersihkan cache..."
 php artisan optimize:clear
+
+echo ""
+echo ">>> Membuat cache baru..."
 php artisan config:cache
+
+# Route cache (abaikan jika gagal karena closure)
+php artisan route:cache || echo ">>> Route cache dilewati (kemungkinan masih menggunakan Closure)."
+
 php artisan view:cache
 
-# 5. Kembalikan ownership ke www-data (Nginx/PHP-FPM butuh akses write ke storage & bootstrap/cache)
-sudo chown -R www-data:www-data "$APP_DIR"
-sudo chmod -R 775 "$APP_DIR/storage" "$APP_DIR/bootstrap/cache"
+echo ""
+echo ">>> Restart service..."
 
-# 6. Restart service — deteksi versi PHP-FPM yang terinstall
-PHP_FPM=$(systemctl list-units --type=service --all 2>/dev/null | grep -oE 'php[0-9.]+-fpm' | head -1)
+PHP_FPM=$(systemctl list-unit-files | awk '/php.*-fpm.service/ {print $1}' | head -1)
+
 if [ -n "$PHP_FPM" ]; then
-  sudo systemctl restart "$PHP_FPM"
-  echo ">>> Restarted: $PHP_FPM"
+    sudo systemctl restart "$PHP_FPM"
+    echo ">>> Restarted: $PHP_FPM"
 else
-  echo ">>> PERINGATAN: PHP-FPM tidak ditemukan. Cek dengan: systemctl list-units | grep php"
+    echo ">>> PHP-FPM tidak ditemukan."
 fi
+
 sudo systemctl reload nginx
 
-echo "===== UPDATE SELESAI ====="
+echo ""
+echo "=========================================="
+echo "UPDATE BERHASIL"
+echo "=========================================="
