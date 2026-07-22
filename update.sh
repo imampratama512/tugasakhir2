@@ -9,7 +9,7 @@ APP_DIR="/var/www/laravel-app"
 
 cd "$APP_DIR"
 
-# Tambahkan safe directory untuk Git
+# Tambahkan safe directory Git
 git config --global --add safe.directory "$APP_DIR" 2>/dev/null || true
 sudo git config --system --add safe.directory "$APP_DIR" 2>/dev/null || true
 
@@ -33,15 +33,6 @@ if [[ "$RUN_MIGRATE" =~ ^[Yy]$ ]]; then
 fi
 
 echo ""
-echo ">>> Mengatur permission..."
-
-sudo chown -R www-data:www-data "$APP_DIR/storage"
-sudo chown -R www-data:www-data "$APP_DIR/bootstrap/cache"
-
-sudo chmod -R 775 "$APP_DIR/storage"
-sudo chmod -R 775 "$APP_DIR/bootstrap/cache"
-
-echo ""
 echo ">>> Membersihkan cache..."
 php artisan optimize:clear
 
@@ -49,10 +40,19 @@ echo ""
 echo ">>> Membuat cache baru..."
 php artisan config:cache
 
-# Route cache (abaikan jika gagal karena closure)
-php artisan route:cache || echo ">>> Route cache dilewati (kemungkinan masih menggunakan Closure)."
+php artisan route:cache || \
+echo ">>> Route cache dilewati (kemungkinan masih menggunakan Closure)."
 
 php artisan view:cache
+
+echo ""
+echo ">>> Mengatur permission..."
+
+sudo chown -R www-data:www-data "$APP_DIR/storage"
+sudo chown -R www-data:www-data "$APP_DIR/bootstrap/cache"
+
+sudo chmod -R 775 "$APP_DIR/storage"
+sudo chmod -R 775 "$APP_DIR/bootstrap/cache"
 
 echo ""
 echo ">>> Restart service..."
